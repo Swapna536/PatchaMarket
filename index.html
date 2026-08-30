@@ -53,9 +53,12 @@
 
         let payload = {};
         const lowerText = queryText.toLowerCase();
-        
+
+        if (lowerText.includes("wallet") || lowerText.includes("balance") || lowerText.includes("profile") || lowerText.includes("credits")) {
+            payload = { action: "view_wallet", user_id: "user_bengaluru_test" };
+        }
         // 🛒 CRITICAL ROUTE 1: Intercept Marketplace Browsing Keywords Before Anything Else
-        if (lowerText.includes("list") || lowerText.includes("browse") || lowerText.includes("view") || lowerText.includes("goods") || lowerText.includes("market")) {
+        else if (lowerText.includes("list") || lowerText.includes("browse") || lowerText.includes("view") || lowerText.includes("goods") || lowerText.includes("market")) {
             payload = { action: "view_marketplace" };
         }
         // 🔄 CRITICAL ROUTE 2: Handle ID + Weight Claims (e.g. "2211982f 3.5") or Lone Numbers (e.g. "3.5")
@@ -112,6 +115,18 @@
                 const deducted = !isNaN(queryText) ? parseFloat(queryText) : 1.0;
                 activeWeight = responseData.remaining_inventory !== undefined ? responseData.remaining_inventory : (activeWeight - deducted);
                 printMessage(`✅ <b>Atomic Transaction Settled!</b><br>• Status: <b>HELD IN ESCROW</b><br>• Remaining available inventory in database: <b>${activeWeight.toFixed(1)} kg</b>`, 'bot');
+                return;
+            }
+
+            // 💳 NEW: Handle and display the Wallet Ledger Response
+            if (responseData.wallet) {
+                const w = responseData.wallet;
+                let walletCard = `💳 <b>PatchaMarket Ledger Card:</b><br>`;
+                walletCard += `• Account Holder: <code>${w.user}</code><br>`;
+                walletCard += `• Total Credits Earned: <span style="color: green; font-weight: bold;">+${w.earned} pts</span><br>`;
+                walletCard += `• Total Credits Escrowed: <span style="color: red; font-weight: bold;">-${w.spent} pts</span><br><br>`;
+                walletCard += `💰 <b>Net Spendable Balance: <span style="font-size: 16px; color: #075e54;">${w.balance} Credits</span></b>`;
+                printMessage(walletCard, 'bot');
                 return;
             }
 
