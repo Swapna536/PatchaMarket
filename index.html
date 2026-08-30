@@ -46,6 +46,7 @@
     async function handleSend() {
         const inputField = document.getElementById("userInput");
         const queryText = inputField.value.trim();
+        const lowerText = queryText.toLowerCase();
         if(!queryText) return;
 
         printMessage(queryText, 'user');
@@ -57,7 +58,7 @@
             payload = { action: "view_marketplace" };
         }
         // Verification Check: If user enters a number, route straight into the fractional database swap logic
-        if (!isNaN(queryText) && activeWeight > 0) {
+        else if (!isNaN(queryText) && activeWeight > 0) {
             const claimAmt = parseFloat(queryText);
             if (claimAmt > activeWeight) {
                 printMessage(`🚨 Claim weight exceeds current available inventory balance! Maximum remaining: ${activeWeight} kg`, 'bot');
