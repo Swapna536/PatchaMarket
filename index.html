@@ -92,10 +92,9 @@
             } else {
                 executeClientFallback(queryText);
             }
-        } catch (error) {
-            // Smooth client-side fallback ensures your presentation video never flags an error bubble
-            console.warn("Rerouting through fail-safe container simulation pipeline.");
-            executeClientFallback(queryText);
+        } } catch (error) {
+                console.error(error);
+                printMessage(❌ <b>Debug Log:</b> Call failed or fell through.<br>Error details: <code>${error.message || error}</code>, 'bot');
         }
     }
 
