@@ -91,15 +91,18 @@
             });
             const responseData = await output.json();
 
-           // 🛒 CONDITION 1: Parse and render live proximity array list from Firestore database
+          
+           // 🛒 CONDITION 1: Parse and render live marketplace proximity list from Firestore database
             if (responseData.items) {
                 if (responseData.items.length === 0) {
                     printMessage(`🛒 <b>PatchaMarket Marketplace:</b><br>No active goods available in your neighborhood registry right now. Try donating some first!`, 'bot');
                     return;
                 }
-                let marketList = `🛒 <b>Available Goods (Sorted by Proximity to ${responseData.detected_epicenter.toUpperCase()}):</b><br><br>`;
+                let marketList = `🛒 <b>Available Goods in Bengaluru Matrix:</b><br><br>`;
                 responseData.items.forEach(prod => {
-                    marketList += `• <b>ID: ${prod.id}</b> | <b>${prod.item}</b><br>&nbsp;&nbsp;📍 Distance: <span style="color: #075e54; font-weight: bold;">${prod.distance} km away</span><br>&nbsp;&nbsp;Supply: <b>${prod.weight} kg</b> (${prod.urgency} Perishability)<br>&nbsp;&nbsp;Cost: ${prod.credits} Credits<br><br>`;
+                    // FIX: Using prod.item and prod.distance to match your live backend network payload!
+                    const distInfo = prod.distance !== undefined ? `<br>&nbsp;&nbsp;📍 Proximity: <span style="color: #075e54; font-weight: bold;">${prod.distance} km away</span>` : '';
+                    marketList += `• <b>ID: ${prod.id}</b> | <b>${prod.item.toUpperCase()}</b>${distInfo}<br>&nbsp;&nbsp;Supply: <b>${prod.weight} kg</b> (${prod.urgency} Perishability)<br>&nbsp;&nbsp;Cost: ${prod.credits} Credits<br><br>`;
                 });
                 marketList += `<i>👉 To claim any portion of an item, reply with its <b>ID followed by a space and the weight</b> you want!</i>`;
                 printMessage(marketList, 'bot');
