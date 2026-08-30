@@ -57,9 +57,16 @@
         if (lowerText.includes("wallet") || lowerText.includes("balance") || lowerText.includes("profile") || lowerText.includes("credits")) {
             payload = { action: "view_wallet", user_id: "user_bengaluru_test" };
         }
-        // 🛒 CRITICAL ROUTE 1: Intercept Marketplace Browsing Keywords Before Anything Else
-        else if (lowerText.includes("list") || lowerText.includes("browse") || lowerText.includes("view") || lowerText.includes("goods") || lowerText.includes("market")) {
-            payload = { action: "view_marketplace" };
+        // 🛒 ROUTE 1: Intercept Marketplace Browsing Keywords & Extract Neighborhood Strings
+        if (lowerText.includes("list") || lowerText.includes("browse") || lowerText.includes("view") || lowerText.includes("goods") || lowerText.includes("market")) {
+            let detectedHood = "bengaluru";
+            if (lowerText.includes("koramangala")) detectedHood = "koramangala";
+            else if (lowerText.includes("mahadevpura")) detectedHood = "mahadevpura";
+            else if (lowerText.includes("hsr")) detectedHood = "hsr";
+            else if (lowerText.includes("indiranagar")) detectedHood = "indiranagar";
+            else if (lowerText.includes("whitefield")) detectedHood = "whitefield";
+            
+            payload = { action: "view_marketplace", hood: detectedHood };
         }
         // 🔄 CRITICAL ROUTE 2: Handle ID + Weight Claims (e.g. "2211982f 3.5") or Lone Numbers (e.g. "3.5")
         else if (queryText.includes(" ") && !isNaN(parseFloat(queryText.split(" ")[1]))) {
@@ -85,16 +92,17 @@
             });
             const responseData = await output.json();
 
-            // 🛒 EXHAUSTIVE CONDITION 1: Parse and render live array results if database view action returns values
+           // 🛒 CONDITION 1: Parse and render live proximity array list from Firestore database
             if (responseData.items) {
                 if (responseData.items.length === 0) {
                     printMessage(`🛒 <b>PatchaMarket Marketplace:</b><br>No active goods available in your neighborhood registry right now. Try donating some first!`, 'bot');
                     return;
                 }
-                let marketList = `🛒 <b>Available Goods in Bengaluru Matrix:</b><br><br>`;
+                let marketList = `🛒 <b>Available Goods (Sorted by Proximity to ${responseData.detected_epicenter.toUpperCase()}):</b><br><br>`;
                 responseData.items.forEach(prod => {
-                    marketList += `• <b>ID: ${prod.id}</b> | <b>${prod.item}</b><br>&nbsp;&nbsp;Supply: ${prod.weight} kg (${prod.urgency} Perishability)<br>&nbsp;&nbsp;Cost: ${prod.credits} Credits<br><br>`;
+                    marketList += `• <b>ID: ${prod.id}</b> | <b>${prod.item}</b><br>&nbsp;&nbsp;📍 Distance: <span style="color: #075e54; font-weight: bold;">${prod.distance} km away</span><br>&nbsp;&nbsp;Supply: <b>${prod.weight} kg</b> (${prod.urgency} Perishability)<br>&nbsp;&nbsp;Cost: ${prod.credits} Credits<br><br>`;
                 });
+                marketList += `<i>👉 To claim any portion of an item, reply with its <b>ID followed by a space and the weight</b> you want!</i>`;
                 printMessage(marketList, 'bot');
                 return;
             }
