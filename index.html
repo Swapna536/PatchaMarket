@@ -50,13 +50,10 @@
 
         printMessage(queryText, 'user');
         inputField.value = "";
-
         let payload = {};
         const lowerText = queryText.toLowerCase();
-
-        if (lowerText.includes("wallet") || lowerText.includes("balance") || lowerText.includes("profile") || lowerText.includes("credits")) {
-            payload = { action: "view_wallet", user_id: "user_bengaluru_test" };
-        }
+        const textParts = queryText.split(/\s+/);
+        
         // 🛒 ROUTE 1: Intercept Marketplace Browsing Keywords & Extract Neighborhood Strings
         if (lowerText.includes("list") || lowerText.includes("browse") || lowerText.includes("view") || lowerText.includes("goods") || lowerText.includes("market")) {
             let detectedHood = "bengaluru";
@@ -68,18 +65,20 @@
             
             payload = { action: "view_marketplace", hood: detectedHood };
         }
-        // 🔄 CRITICAL ROUTE 2: Handle ID + Weight Claims (e.g. "2211982f 3.5") or Lone Numbers (e.g. "3.5")
-        else if (queryText.includes(" ") && !isNaN(parseFloat(queryText.split(" ")[1]))) {
-            const parts = queryText.split(" ");
-            lastActiveListingId = parts[0];
-            const claimAmt = parseFloat(parts[1]);
-            payload = { action: "claim_item", listing_id: lastActiveListingId, claim_weight: claimAmt };
+        // 💳 ROUTE 2: Intercept Wallet Request Actions
+        else if (lowerText.includes("wallet") || lowerText.includes("balance") || lowerText.includes("profile") || lowerText.includes("credits")) {
+            payload = { action: "view_wallet", user_id: "user_bengaluru_test" };
         }
+        // 🔄 ROUTE 3: Advanced ID-Targeted Claiming (e.g. "2211982f 3.5")
+        else if (textParts.length >= 2 && textParts[0].length === 8 && !isNaN(parseFloat(textParts[1]))) {
+            lastActiveListingId = textParts[0];
+            payload = { action: "claim_item", listing_id: textParts[0], claim_weight: parseFloat(textParts[1]) };
+        }
+        // 🔄 ROUTE 4: Single Integer/Float Portion Claiming (e.g. "3.5")
         else if (!isNaN(queryText) && queryText !== "") {
-            const claimAmt = parseFloat(queryText);
-            payload = { action: "claim_item", listing_id: lastActiveListingId, claim_weight: claimAmt };
-        }
-        // 📝 CRITICAL ROUTE 3: Standard donor intake loop handling unstructured natural text
+            payload = { action: "claim_item", listing_id: lastActiveListingId, claim_weight: parseFloat(queryText) };
+        } 
+        // 📝 ROUTE 5: Standard unstructured donor natural text pipeline
         else {
             payload = { action: "list_surplus", text: queryText };
         }
