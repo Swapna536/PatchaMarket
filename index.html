@@ -52,6 +52,10 @@
         inputField.value = "";
 
         let payload = {};
+
+        if (lowerText.includes("list") || lowerText.includes("browse") || lowerText.includes("view")) {
+            payload = { action: "view_marketplace" };
+        }
         // Verification Check: If user enters a number, route straight into the fractional database swap logic
         if (!isNaN(queryText) && activeWeight > 0) {
             const claimAmt = parseFloat(queryText);
