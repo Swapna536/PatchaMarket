@@ -59,12 +59,14 @@
             payload = { action: "view_marketplace" };
         }
         // 🔄 CRITICAL ROUTE 2: If input is just a number, route straight to atomic fractional escrow mutations
+        else if (queryText.includes(" ") && !isNaN(queryText.split(" ")[1])) {
+            const parts = queryText.split(" ");
+            lastActiveListingId = parts[0];
+            const claimAmt = parseFloat(parts[1]);
+            payload = { action: "claim_item", listing_id: lastActiveListingId, claim_weight: claimAmt };
+        }
         else if (!isNaN(queryText) && activeWeight > 0) {
             const claimAmt = parseFloat(queryText);
-            if (claimAmt > activeWeight) {
-                printMessage(`🚨 Claim weight exceeds current available inventory balance! Maximum remaining: ${activeWeight} kg`, 'bot');
-                return;
-            }
             payload = { action: "claim_item", listing_id: lastActiveListingId, claim_weight: claimAmt };
         } 
         // 📝 CRITICAL ROUTE 3: Standard donor intake loop handling unstructured natural text
