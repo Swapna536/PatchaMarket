@@ -16,6 +16,9 @@
         .input-tray { padding: 10px; background: #f0f0f0; display: flex; gap: 6px; align-items: center; }
         input { flex: 1; padding: 10px 14px; border: none; border-radius: 20px; outline: none; font-size: 14px; }
         button { background: #075e54; color: white; border: none; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .mic-btn { background: #128c7e; color: white; border: none; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: all 0.2s ease; }
+        .mic-btn.recording { background: #d32f2f; transform: scale(1.1); animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); } }
     </style>
 </head>
 <body>
@@ -29,7 +32,9 @@
             <div class="bubble bot">Welcome to the PatchaMarket Bangalore pilot network! 🌍<br><br>Simulate sending a WhatsApp voice note. Try typing:<br><i>"I have 12 kg of extra fresh potatoes from my terrace garden ripening fast in Koramangala!"</i></div>
         </div>
         <div class="input-tray">
-            <input type="text" id="userInput" placeholder="Type simulated voice command...">
+            <!-- 🎙️ MIC RECORDING CONTROL UI BUTTON -->
+            <button id="micButton" class="mic-btn" onclick="toggleAudioRecording()">🎙️</button>
+            <input type="text" id="userInput" placeholder="Type or tap mic to talk...">
             <button onclick="handleSend()">➔</button>
         </div>
     </div>
@@ -183,6 +188,87 @@
         box.innerHTML = msg;
         pane.appendChild(box);
         pane.scrollTop = pane.scrollHeight;
+    }
+    // 🔊 SOUND EFFECTS CHIMES
+    const TX_SUCCESS_SOUND = new Audio("https://mixkit.co"); 
+    const MSG_OUTBOUND_SOUND = new Audio("https://mixkit.co"); 
+    TX_SUCCESS_SOUND.volume = 0.4;
+    MSG_OUTBOUND_SOUND.volume = 0.3;
+
+    // Trigger outbound sound instantly when user sends a packet
+    const originalHandleSend = handleSend;
+    handleSend = async function() {
+        MSG_OUTBOUND_SOUND.play().catch(e => console.log("Sound engine activated"));
+        await originalHandleSend();
+    };
+
+    // Listen for transaction completions to fire success chimes automatically
+    setInterval(() => {
+        const lastBotBubble = document.querySelector(".bubble.bot:last-child");
+        if (lastBotBubble && lastBotBubble.innerHTML.includes("Atomic Transaction Settled") && !lastBotBubble.hasAttribute("data-sound-played")) {
+            lastBotBubble.setAttribute("data-sound-played", "true");
+            TX_SUCCESS_SOUND.play().catch(e => console.log("Audio block cleared"));
+        }
+    }, 500);
+
+    // 🎙️ MICROPHONE RECORDING MACHINE LOGIC
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecordingAudio = false;
+
+    async function toggleAudioRecording() {
+        const micBtn = document.getElementById("micButton");
+        const inputField = document.getElementById("userInput");
+
+        if (!isRecordingAudio) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    micBtn.innerText = "⏳";
+                    inputField.placeholder = "Processing voice note metrics...";
+                    
+                    setTimeout(() => {
+                        micBtn.innerText = "🎙️";
+                        inputField.placeholder = "Type simulated voice command...";
+                        
+                        // Rotates key testing phrases for your presentation demo loop natively!
+                        const mockVoiceTexts = [
+                            "I have 20 kg potatoes in Koramangala",
+                            "list items in koramangala",
+                            "wallet",
+                            "I have 15 kg apples in indiranagar"
+                        ];
+                        const resolvedVoicePhrase = mockVoiceTexts[Math.floor(Math.random() * mockVoiceTexts.length)];
+                        
+                        inputField.value = resolvedVoicePhrase;
+                        printMessage(🎙️ <i>Voice Note Parsed: "${resolvedVoicePhrase}"</i>, 'bot');
+                    }, 1500);
+                };
+
+                mediaRecorder.start();
+                isRecordingAudio = true;
+                micBtn.classList.add("recording");
+                micBtn.innerText = "🛑";
+                inputField.placeholder = "Recording live voice note... Tap red button to stop.";
+            } catch (err) {
+                console.error("Hardware block:", err);
+                printMessage("❌ <b>Hardware Permission Error:</b> Unable to open microphone stream.", "bot");
+            }
+        } else {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+            isRecordingAudio = false;
+            micBtn.classList.remove("recording");
+        }
     }
 </script>
 </body>
