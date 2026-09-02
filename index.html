@@ -4,272 +4,1409 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PatchaMarket Web Client Emulator</title>
+
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #dadbd4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .smartphone { width: 360px; height: 640px; background: white; border: 12px solid #222; border-radius: 36px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 12px 24px rgba(0,0,0,0.3); position: relative; }
-        .top-bar { background: #075e54; color: white; padding: 16px 12px; font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .avatar { width: 32px; height: 32px; background: #128c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .chat-body { flex: 1; padding: 12px; background: #efeae2; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .bubble { max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 14px; line-height: 1.4; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-        .user { background: #e7ffdb; align-self: flex-end; border-top-right-radius: 0; }
-        .bot { background: white; align-self: flex-start; border-top-left-radius: 0; }
-        .input-tray { padding: 10px; background: #f0f0f0; display: flex; gap: 6px; align-items: center; }
-        input { flex: 1; padding: 10px 14px; border: none; border-radius: 20px; outline: none; font-size: 14px; }
-        button { background: #075e54; color: white; border: none; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .mic-btn { background: #128c7e; color: white; border: none; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: all 0.2s ease; margin-right: 4px; position: relative; z-index: 100; }
-        .mic-btn.recording { background: #d32f2f; transform: scale(1.1); animation: pulse 1.2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); } }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                Helvetica, Arial, sans-serif;
+            background-color: #dadbd4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .smartphone {
+            width: 360px;
+            height: 640px;
+            background: white;
+            border: 12px solid #222;
+            border-radius: 36px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .top-bar {
+            background: #075e54;
+            color: white;
+            padding: 16px 12px;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            background: #128c7e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 12px;
+            background: #efeae2;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+            word-wrap: break-word;
+        }
+
+        .bubble.user {
+            background: #e7ffdb;
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+
+        .bubble.bot {
+            background: white;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+
+        .input-tray {
+            padding: 10px;
+            background: #f0f0f0;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+            min-width: 0;
+        }
+
+        button {
+            background: #075e54;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .mic-btn {
+            background: #128c7e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            margin-right: 4px;
+            position: relative;
+            z-index: 100;
+        }
+
+        .mic-btn.recording {
+            background: #d32f2f;
+            transform: scale(1.1);
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(211, 47, 47, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
+            }
+        }
+
+        .status {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            padding: 3px 0;
+            background: #f0f0f0;
+        }
     </style>
 </head>
+
 <body>
 
-    <div class="smartphone">
-        <div class="top-bar">
-            <div class="avatar">🌿</div>
-            <div>PatchaMarket Ledger Bot</div>
-        </div>
-        <div id="chatContainer" class="chat-body">
-            <div class="bubble bot">Welcome to the PatchaMarket Bangalore pilot network! 🌍<br><br>Simulate sending a WhatsApp voice note. Try typing:<br><i>"I have 12 kg of extra fresh potatoes from my terrace garden ripening fast in Koramangala!"</i></div>
-        </div>
-        <div class="input-tray">
-            <!-- 🎙️ MIC RECORDING CONTROL UI BUTTON -->
-            <button id="micButton" class="mic-btn" onclick="toggleAudioRecording()">🎙️</button>
-            <input type="text" id="userInput" placeholder="Type or tap mic to talk...">
-            <button onclick="handleSend()">➔</button>
+<div class="smartphone">
+
+    <div class="top-bar">
+        <div class="avatar">🌿</div>
+        <div>PatchaMarket Ledger Bot</div>
+    </div>
+
+    <div id="chatContainer" class="chat-body">
+        <div class="bubble bot">
+            Welcome to the PatchaMarket Bangalore pilot network! 🌍
+            <br><br>
+
+            Simulate sending a WhatsApp voice note. You can type or tap the
+            microphone and speak.
+            <br><br>
+
+            Example:
+            <br>
+            <i>
+                "I have 12 kg of extra fresh potatoes from my terrace garden
+                ripening fast in Koramangala!"
+            </i>
         </div>
     </div>
 
+    <div id="status" class="status">
+        Ready
+    </div>
+
+    <div class="input-tray">
+
+        <button
+            id="micButton"
+            class="mic-btn"
+            type="button"
+            onclick="toggleAudioRecording()"
+            title="Record voice note"
+        >
+            🎙️
+        </button>
+
+        <input
+            type="text"
+            id="userInput"
+            placeholder="Type or tap mic to talk..."
+            autocomplete="off"
+        >
+
+        <button
+            id="sendButton"
+            type="button"
+            onclick="handleSend()"
+            title="Send"
+        >
+            ➔
+        </button>
+
+    </div>
+</div>
+
 <script>
-    // ⚠️ SECURE LINK ANCHOR: YOUR PORT-OPTIMIZED GOOGLE CLOUD RUN ENDPOINT
-    const GCP_URL = "https://patcha-market-blitz-core-252497578867.us-central1.run.app"; 
-    
-    // Client-side fallback state trackers
+    /*
+     * ============================================================
+     * CONFIGURATION
+     * ============================================================
+     */
+
+    const GCP_URL =
+        "https://patcha-market-blitz-core-252497578867.us-central1.run.app";
+
+    /*
+     * IMPORTANT:
+     *
+     * Your backend needs an endpoint such as:
+     *
+     * POST /transcribe
+     *
+     * that accepts multipart/form-data:
+     *
+     * audio = voice-note.webm
+     *
+     * and returns:
+     *
+     * {
+     *     "transcript": "I have 12 kg potatoes in Koramangala"
+     * }
+     *
+     * Change this path if your backend uses another endpoint.
+     */
+    const TRANSCRIBE_URL = `${GCP_URL}/transcribe`;
+
+
+    /*
+     * ============================================================
+     * APPLICATION STATE
+     * ============================================================
+     */
+
     let lastActiveListingId = "demo-blitz-id";
     let activeItem = "Produce";
     let activeWeight = 0;
 
-    async function handleSend() {
-        const inputField = document.getElementById("userInput");
-        const queryText = inputField.value.trim();
-        if(!queryText) return;
-
-        printMessage(queryText, 'user');
-        inputField.value = "";
-        let payload = {};
-        const lowerText = queryText.toLowerCase();
-        const textParts = queryText.split(/\s+/);
-        
-        // 🛒 ROUTE 1: Intercept Marketplace Browsing Keywords & Extract Neighborhood Strings
-        if (lowerText.includes("list") || lowerText.includes("browse") || lowerText.includes("view") || lowerText.includes("goods") || lowerText.includes("market")) {
-            let detectedHood = "bengaluru";
-            if (lowerText.includes("koramangala")) detectedHood = "koramangala";
-            else if (lowerText.includes("mahadevpura")) detectedHood = "mahadevpura";
-            else if (lowerText.includes("hsr")) detectedHood = "hsr";
-            else if (lowerText.includes("indiranagar")) detectedHood = "indiranagar";
-            else if (lowerText.includes("whitefield")) detectedHood = "whitefield";
-            
-            payload = { action: "view_marketplace", hood: detectedHood };
-        }
-        // 💳 ROUTE 2: Intercept Wallet Request Actions
-        else if (lowerText.includes("wallet") || lowerText.includes("balance") || lowerText.includes("profile") || lowerText.includes("credits")) {
-            payload = { action: "view_wallet", user_id: "user_bengaluru_test" };
-        }
-        // 🔄 ROUTE 3: Advanced ID-Targeted Claiming (e.g. "2211982f 3.5")
-        else if (textParts.length >= 2 && textParts[0].length === 8 && !isNaN(parseFloat(textParts[1]))) {
-            lastActiveListingId = textParts[0];
-            payload = { action: "claim_item", listing_id: textParts[0], claim_weight: parseFloat(textParts[1]) };
-        }
-        // 🔄 ROUTE 4: Single Integer/Float Portion Claiming (e.g. "3.5")
-        else if (!isNaN(queryText) && queryText !== "") {
-            payload = { action: "claim_item", listing_id: lastActiveListingId, claim_weight: parseFloat(queryText) };
-        } 
-        // 📝 ROUTE 5: Standard unstructured donor natural text pipeline
-        else {
-            payload = { action: "list_surplus", text: queryText };
-        }
-
-        try {
-            const output = await fetch(GCP_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            const responseData = await output.json();
-
-          
-           // 🛒 CONDITION 1: Parse and render live marketplace proximity list from Firestore database
-            if (responseData.items) {
-                if (responseData.items.length === 0) {
-                    printMessage(`🛒 <b>PatchaMarket Marketplace:</b><br>No active goods available in your neighborhood registry right now. Try donating some first!`, 'bot');
-                    return;
-                }
-                let marketList = `🛒 <b>Available Goods in Bengaluru Matrix:</b><br><br>`;
-                responseData.items.forEach(prod => {
-                    // FIX: Using prod.item and prod.distance to match your live backend network payload!
-                    const distInfo = prod.distance !== undefined ? `<br>&nbsp;&nbsp;📍 Proximity: <span style="color: #075e54; font-weight: bold;">${prod.distance} km away</span>` : '';
-                    marketList += `• <b>ID: ${prod.id}</b> | <b>${prod.item.toUpperCase()}</b>${distInfo}<br>&nbsp;&nbsp;Supply: <b>${prod.weight} kg</b> (${prod.urgency} Perishability)<br>&nbsp;&nbsp;Cost: ${prod.credits} Credits<br><br>`;
-                });
-                marketList += `<i>👉 To claim any portion of an item, reply with its <b>ID followed by a space and the weight</b> you want!</i>`;
-                printMessage(marketList, 'bot');
-                return;
-            }
-
-            // 🤖 EXHAUSTIVE CONDITION 2: Process normal structured metadata if donor loop evaluates text
-            if (responseData.credits_earned || (responseData.data && responseData.data.item)) {
-                lastActiveListingId = responseData.listing_id || "demo-blitz-id";
-                activeItem = responseData.data.item;
-                activeWeight = parseFloat(responseData.data.weight_kg);
-                const points = responseData.credits_earned || Math.round(activeWeight * 10);
-                
-                printMessage(`🤖 <b>Vertex AI Evaluation Matrix:</b><br>• Item Extracted: <b>${activeItem}</b><br>• Scaled Weight: <b>${activeWeight} kg</b><br>• Perishability Urgency: <b>${responseData.data.urgency || 'HIGH'}</b><br><br>💰 <b>+${points} Community Credits</b> committed to your profile ledger wallet.<br><br><i>👉 To test fractional claiming, reply entering just a single number (e.g. "3") to claim a portion!</i>`, 'bot');
-                return;
-            } 
-            
-            // 🔒 EXHAUSTIVE CONDITION 3: Handle fractional transaction status returns
-            if (responseData.remaining_inventory !== undefined || (responseData.message && responseData.message.includes("Claimed"))) {
-                const deducted = !isNaN(queryText) ? parseFloat(queryText) : 1.0;
-                activeWeight = responseData.remaining_inventory !== undefined ? responseData.remaining_inventory : (activeWeight - deducted);
-                printMessage(`✅ <b>Atomic Transaction Settled!</b><br>• Status: <b>HELD IN ESCROW</b><br>• Remaining available inventory in database: <b>${activeWeight.toFixed(1)} kg</b>`, 'bot');
-                return;
-            }
-
-            // 💳 NEW: Handle and display the Wallet Ledger Response
-            if (responseData.wallet) {
-                const w = responseData.wallet;
-                let walletCard = `💳 <b>PatchaMarket Ledger Card:</b><br>`;
-                walletCard += `• Account Holder: <code>${w.user}</code><br>`;
-                walletCard += `• Total Credits Earned: <span style="color: green; font-weight: bold;">+${w.earned} pts</span><br>`;
-                walletCard += `• Total Credits Escrowed: <span style="color: red; font-weight: bold;">-${w.spent} pts</span><br><br>`;
-                walletCard += `💰 <b>Net Spendable Balance: <span style="font-size: 16px; color: #075e54;">${w.balance} Credits</span></b>`;
-                printMessage(walletCard, 'bot');
-                return;
-            }
-
-            // Fallback catch-all structural buffer if object schemas encounter parsing mismatch deviations
-            executeClientFallback(queryText);
-
-        } catch (error) {
-            console.error("Downstream handshake boundary caught exception:", error);
-            executeClientFallback(queryText);
-        }
-    }
-
-    function executeClientFallback(text) {
-        const lower = text.toLowerCase();
-        
-        // Fail-safe database array emulation view if network handshakes drop
-        if (lower.includes("list") || lower.includes("browse") || lower.includes("view") || lower.includes("goods") || lower.includes("market")) {
-            printMessage(`🛒 <b>Available Goods in Bengaluru Matrix (Offline Cache Mode):</b><br><br>• <b>ID: listings-demo</b> | <b>Fresh Garden Oranges</b><br>&nbsp;&nbsp;Supply: 10.0 kg (HIGH Perishability)<br>&nbsp;&nbsp;Cost: 100 Credits`, 'bot');
-            return;
-        }
-
-        if (!isNaN(text) && activeWeight > 0) {
-            const claimAmt = parseFloat(text);
-            activeWeight = Math.max(0, activeWeight - claimAmt);
-            printMessage(`✅ <b>Atomic Transaction Settled!</b><br>• Status: <b>HELD IN ESCROW</b><br>• Remaining available inventory tracked: <b>${activeWeight.toFixed(1)} kg</b>`, 'bot');
-        } else {
-            const itemGuess = text.toLowerCase().includes("tomato") ? "Tomatoes" : text.toLowerCase().includes("mango") ? "Mangoes" : text.toLowerCase().includes("orange") ? "Oranges" : "Surplus Produce";
-            let weightGuess = 8.0;
-            const matches = text.match(/\d+/);
-            if (matches) weightGuess = parseFloat(matches[0]);
-            
-            activeItem = itemGuess;
-            activeWeight = weightGuess;
-            const points = Math.round(weightGuess * 10);
-
-            printMessage(`🤖 <b>Vertex AI Evaluation Matrix:</b><br>• Item Extracted: <b>${activeItem}</b><br>• Scaled Weight: <b>${activeWeight} kg</b><br>• Perishability Urgency: <b>HIGH</b><br><br>💰 <b>+${points} Community Credits</b> committed to your profile ledger wallet.<br><br><i>👉 To test fractional claiming, reply entering just a single number (e.g. "3") to claim a portion!</i>`, 'bot');
-        }
-    }
-
-    function printMessage(msg, senderType) {
-        const pane = document.getElementById("chatContainer");
-        const box = document.createElement("div");
-        box.className = `bubble ${senderType}`;
-        box.innerHTML = msg;
-        pane.appendChild(box);
-        pane.scrollTop = pane.scrollHeight;
-    }
-    // 🔊 SOUND EFFECTS CHIMES
-    const TX_SUCCESS_SOUND = new Audio("https://mixkit.co"); 
-    const MSG_OUTBOUND_SOUND = new Audio("https://mixkit.co"); 
-    TX_SUCCESS_SOUND.volume = 0.4;
-    MSG_OUTBOUND_SOUND.volume = 0.3;
-
-    // Trigger outbound sound instantly when user sends a packet
-    const originalHandleSend = handleSend;
-    handleSend = async function() {
-        MSG_OUTBOUND_SOUND.play().catch(e => console.log("Sound engine activated"));
-        await originalHandleSend();
-    };
-
-    // Listen for transaction completions to fire success chimes automatically
-    setInterval(() => {
-        const lastBotBubble = document.querySelector(".bubble.bot:last-child");
-        if (lastBotBubble && lastBotBubble.innerHTML.includes("Atomic Transaction Settled") && !lastBotBubble.hasAttribute("data-sound-played")) {
-            lastBotBubble.setAttribute("data-sound-played", "true");
-            TX_SUCCESS_SOUND.play().catch(e => console.log("Audio block cleared"));
-        }
-    }, 500);
-
-    // 🎙️ MICROPHONE RECORDING MACHINE LOGIC
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecordingAudio = false;
 
-    async function toggleAudioRecording() {
-        const micBtn = document.getElementById("micButton");
-        const inputField = document.getElementById("userInput");
 
-        if (!isRecordingAudio) {
+    /*
+     * ============================================================
+     * OPTIONAL AUDIO FEEDBACK
+     * ============================================================
+     *
+     * The original code used:
+     *
+     * new Audio("https://mixkit.co")
+     *
+     * which is a website URL, NOT an audio file.
+     *
+     * We therefore do not use those invalid Audio objects.
+     *
+     * If you have actual .mp3/.wav files, put their URLs here.
+     */
+
+    const TX_SUCCESS_SOUND_URL = "";
+    const MSG_OUTBOUND_SOUND_URL = "";
+
+    const TX_SUCCESS_SOUND =
+        TX_SUCCESS_SOUND_URL
+            ? new Audio(TX_SUCCESS_SOUND_URL)
+            : null;
+
+    const MSG_OUTBOUND_SOUND =
+        MSG_OUTBOUND_SOUND_URL
+            ? new Audio(MSG_OUTBOUND_SOUND_URL)
+            : null;
+
+    if (TX_SUCCESS_SOUND) {
+        TX_SUCCESS_SOUND.volume = 0.4;
+    }
+
+    if (MSG_OUTBOUND_SOUND) {
+        MSG_OUTBOUND_SOUND.volume = 0.3;
+    }
+
+
+    /*
+     * ============================================================
+     * DOM ELEMENTS
+     * ============================================================
+     */
+
+    const chatContainer = document.getElementById("chatContainer");
+    const userInput = document.getElementById("userInput");
+    const micButton = document.getElementById("micButton");
+    const sendButton = document.getElementById("sendButton");
+    const statusElement = document.getElementById("status");
+
+
+    /*
+     * ============================================================
+     * STATUS
+     * ============================================================
+     */
+
+    function setStatus(message) {
+        statusElement.textContent = message;
+    }
+
+
+    /*
+     * ============================================================
+     * MESSAGE RENDERING
+     * ============================================================
+     */
+
+    function printMessage(msg, senderType) {
+        const box = document.createElement("div");
+
+        box.className = `bubble ${senderType}`;
+
+        /*
+         * This intentionally uses innerHTML because the existing
+         * application sends formatted HTML such as <b> and <br>.
+         *
+         * For production, sanitize any backend/user-controlled
+         * HTML before inserting it.
+         */
+        box.innerHTML = msg;
+
+        chatContainer.appendChild(box);
+
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+
+    /*
+     * ============================================================
+     * SEND TEXT MESSAGE
+     * ============================================================
+     */
+
+    async function handleSend() {
+
+        const queryText = userInput.value.trim();
+
+        if (!queryText) {
+            return;
+        }
+
+        /*
+         * Play outbound sound if configured.
+         */
+        if (MSG_OUTBOUND_SOUND) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                audioChunks = [];
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-                
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = async () => {
-                    micBtn.innerText = "⏳";
-                    inputField.placeholder = "Processing voice note metrics...";
-                    
-                    setTimeout(() => {
-                        micBtn.innerText = "🎙️";
-                        inputField.placeholder = "Type simulated voice command...";
-                        
-                        // Rotates key testing phrases for your presentation demo loop natively!
-                        const mockVoiceTexts = [
-                            "I have 20 kg potatoes in Koramangala",
-                            "list items in koramangala",
-                            "wallet",
-                            "I have 15 kg apples in indiranagar"
-                        ];
-                        const resolvedVoicePhrase = mockVoiceTexts[Math.floor(Math.random() * mockVoiceTexts.length)];
-                        
-                        inputField.value = resolvedVoicePhrase;
-                        printMessage(🎙️ <i>Voice Note Parsed: "${resolvedVoicePhrase}"</i>, 'bot');
-                    }, 1500);
-                };
-
-                mediaRecorder.start();
-                isRecordingAudio = true;
-                micBtn.classList.add("recording");
-                micBtn.innerText = "🛑";
-                inputField.placeholder = "Recording live voice note... Tap red button to stop.";
-            } catch (err) {
-                console.error("Hardware block:", err);
-                printMessage("❌ <b>Hardware Permission Error:</b> Unable to open microphone stream.", "bot");
+                MSG_OUTBOUND_SOUND.currentTime = 0;
+                await MSG_OUTBOUND_SOUND.play();
+            } catch (error) {
+                console.log("Outbound audio blocked:", error);
             }
-        } else {
-            if (mediaRecorder && mediaRecorder.state !== "inactive") {
-                mediaRecorder.stop();
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+
+        printMessage(queryText, "user");
+
+        userInput.value = "";
+
+        await processUserText(queryText);
+    }
+
+
+    /*
+     * ============================================================
+     * PROCESS USER TEXT
+     * ============================================================
+     *
+     * This is separated from handleSend() so that voice
+     * transcription can call the exact same pipeline.
+     */
+
+    async function processUserText(queryText) {
+
+        const lowerText = queryText.toLowerCase();
+        const textParts = queryText.trim().split(/\s+/);
+
+        let payload = {};
+
+
+        /*
+         * --------------------------------------------------------
+         * ROUTE 1: MARKETPLACE BROWSING
+         * --------------------------------------------------------
+         */
+
+        if (
+            lowerText.includes("list") ||
+            lowerText.includes("browse") ||
+            lowerText.includes("view") ||
+            lowerText.includes("goods") ||
+            lowerText.includes("market")
+        ) {
+
+            let detectedHood = "bengaluru";
+
+            if (lowerText.includes("koramangala")) {
+                detectedHood = "koramangala";
             }
-            isRecordingAudio = false;
-            micBtn.classList.remove("recording");
+            else if (lowerText.includes("mahadevpura")) {
+                detectedHood = "mahadevpura";
+            }
+            else if (lowerText.includes("hsr")) {
+                detectedHood = "hsr";
+            }
+            else if (lowerText.includes("indiranagar")) {
+                detectedHood = "indiranagar";
+            }
+            else if (lowerText.includes("whitefield")) {
+                detectedHood = "whitefield";
+            }
+
+            payload = {
+                action: "view_marketplace",
+                hood: detectedHood
+            };
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * ROUTE 2: WALLET
+         * --------------------------------------------------------
+         */
+
+        else if (
+            lowerText.includes("wallet") ||
+            lowerText.includes("balance") ||
+            lowerText.includes("profile") ||
+            lowerText.includes("credits")
+        ) {
+
+            payload = {
+                action: "view_wallet",
+                user_id: "user_bengaluru_test"
+            };
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * ROUTE 3: ID + WEIGHT
+         *
+         * Example:
+         *
+         * 2211982f 3.5
+         * --------------------------------------------------------
+         */
+
+        else if (
+            textParts.length >= 2 &&
+            !isNaN(parseFloat(textParts[1]))
+        ) {
+
+            payload = {
+                action: "claim_item",
+                listing_id: textParts[0],
+                claim_weight: parseFloat(textParts[1])
+            };
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * ROUTE 4: WEIGHT ONLY
+         *
+         * Example:
+         *
+         * 3.5
+         * --------------------------------------------------------
+         */
+
+        else if (
+            !isNaN(Number(queryText)) &&
+            queryText !== ""
+        ) {
+
+            payload = {
+                action: "claim_item",
+                listing_id: lastActiveListingId,
+                claim_weight: parseFloat(queryText)
+            };
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * ROUTE 5: NATURAL DONOR TEXT
+         * --------------------------------------------------------
+         */
+
+        else {
+
+            payload = {
+                action: "list_surplus",
+                text: queryText
+            };
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * SEND TO BACKEND
+         * --------------------------------------------------------
+         */
+
+        setStatus("Connecting to PatchaMarket...");
+
+        try {
+
+            const output = await fetch(GCP_URL, {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(payload)
+            });
+
+
+            if (!output.ok) {
+
+                throw new Error(
+                    `Backend returned HTTP ${output.status}`
+                );
+            }
+
+
+            const responseData = await output.json();
+
+            renderBackendResponse(responseData);
+
+            setStatus("Ready");
+
+        }
+        catch (error) {
+
+            console.error(
+                "Downstream boundary caught exception:",
+                error
+            );
+
+            setStatus("Connection error");
+
+            printMessage(
+                `❌ <b>Live Synchronicity Connection Failure:</b><br>
+                 System encountered a backend connection or mapping error.<br><br>
+                 <small>${escapeHtml(error.message)}</small>`,
+                "bot"
+            );
         }
     }
+
+
+    /*
+     * ============================================================
+     * BACKEND RESPONSE RENDERER
+     * ============================================================
+     */
+
+    function renderBackendResponse(responseData) {
+
+        /*
+         * --------------------------------------------------------
+         * MARKETPLACE
+         * --------------------------------------------------------
+         */
+
+        if (responseData.items) {
+
+            if (responseData.items.length === 0) {
+
+                printMessage(
+                    `🛒 <b>PatchaMarket Marketplace:</b><br>
+                     No active goods available in your neighborhood registry right now.`,
+                    "bot"
+                );
+
+                return;
+            }
+
+
+            let marketList =
+                `🛒 <b>Available Goods in Bengaluru Matrix:</b><br><br>`;
+
+
+            responseData.items.forEach((prod) => {
+
+                const distInfo =
+                    prod.distance !== undefined
+                        ? `<br>
+                           &nbsp;&nbsp;📍 Proximity:
+                           <span style="color:#075e54;font-weight:bold;">
+                               ${escapeHtml(String(prod.distance))} km away
+                           </span>`
+                        : "";
+
+
+                marketList +=
+                    `• <b>ID: ${escapeHtml(String(prod.id ?? ""))}</b>
+                     |
+                     <b>${escapeHtml(String(prod.item ?? "").toUpperCase())}</b>
+                     ${distInfo}
+                     <br>
+                     &nbsp;&nbsp;Supply:
+                     <b>${escapeHtml(String(prod.weight ?? ""))} kg</b>
+                     (${escapeHtml(String(prod.urgency ?? ""))} Perishability)
+                     <br>
+                     &nbsp;&nbsp;Cost:
+                     ${escapeHtml(String(prod.credits ?? ""))} Credits
+                     <br><br>`;
+            });
+
+
+            marketList +=
+                `<i>
+                    👉 To claim any portion of an item, reply with its
+                    <b>ID followed by a space and the weight</b>.
+                 </i>`;
+
+
+            printMessage(marketList, "bot");
+
+            return;
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * WALLET
+         * --------------------------------------------------------
+         */
+
+        if (responseData.wallet) {
+
+            const w = responseData.wallet;
+
+            let walletCard =
+                `💳 <b>PatchaMarket Ledger Card:</b><br>`;
+
+            walletCard +=
+                `• Account Holder:
+                 <code>${escapeHtml(String(w.user ?? ""))}</code><br>`;
+
+            walletCard +=
+                `• Total Credits Earned:
+                 <span style="color:green;font-weight:bold;">
+                     +${escapeHtml(String(w.earned ?? 0))} pts
+                 </span><br>`;
+
+            walletCard +=
+                `• Total Credits Escrowed:
+                 <span style="color:red;font-weight:bold;">
+                     -${escapeHtml(String(w.spent ?? 0))} pts
+                 </span><br><br>`;
+
+            walletCard +=
+                `💰 <b>Net Spendable Balance:
+                    <span style="font-size:16px;color:#075e54;">
+                        ${escapeHtml(String(w.balance ?? 0))} Credits
+                    </span>
+                </b>`;
+
+
+            printMessage(walletCard, "bot");
+
+            return;
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * DONOR EXTRACTION
+         * --------------------------------------------------------
+         */
+
+        if (
+            responseData.credits_earned ||
+            (responseData.data && responseData.data.item)
+        ) {
+
+            lastActiveListingId =
+                responseData.listing_id || "demo-blitz-id";
+
+
+            activeItem =
+                responseData.data?.item || "Produce";
+
+
+            activeWeight =
+                parseFloat(responseData.data?.weight_kg || 0);
+
+
+            const points =
+                responseData.credits_earned ||
+                Math.round(activeWeight * 10);
+
+
+            printMessage(
+                `🤖 <b>Vertex AI Evaluation Matrix:</b><br>
+                 • Item Extracted:
+                 <b>${escapeHtml(String(activeItem))}</b><br>
+                 • Scaled Weight:
+                 <b>${escapeHtml(String(activeWeight))} kg</b><br>
+                 • Perishability Urgency:
+                 <b>${escapeHtml(String(responseData.data?.urgency || "HIGH"))}</b>
+                 <br><br>
+
+                 💰 <b>+${escapeHtml(String(points))}
+                 Community Credits</b>
+                 committed to your profile ledger wallet.
+                 <br><br>
+
+                 <i>
+                 👉 To claim a portion of this specific item immediately,
+                 simply reply typing just the number of kilograms you want!
+                 </i>`,
+                "bot"
+            );
+
+            return;
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * CLAIM / ESCROW
+         * --------------------------------------------------------
+         */
+
+        if (
+            responseData.remaining_inventory !== undefined ||
+            (
+                responseData.message &&
+                String(responseData.message)
+                    .toLowerCase()
+                    .includes("claim")
+            )
+        ) {
+
+            if (TX_SUCCESS_SOUND) {
+
+                try {
+                    TX_SUCCESS_SOUND.currentTime = 0;
+                    TX_SUCCESS_SOUND.play();
+                }
+                catch (error) {
+                    console.log(
+                        "Transaction sound unavailable:",
+                        error
+                    );
+                }
+            }
+
+
+            const remInventory =
+                responseData.remaining_inventory !== undefined
+                    ? responseData.remaining_inventory
+                    : 0;
+
+
+            printMessage(
+                `✅ <b>Atomic Transaction Settled!</b><br>
+                 • Status:
+                 <span style="color:#075e54;font-weight:bold;">
+                     HELD IN ESCROW
+                 </span>
+                 <br>
+                 • Remaining item supply available in database:
+                 <b>${escapeHtml(String(remInventory))} kg</b>`,
+                "bot"
+            );
+
+            return;
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * GENERIC RESPONSE
+         * --------------------------------------------------------
+         */
+
+        if (responseData.message) {
+
+            printMessage(
+                escapeHtml(String(responseData.message)),
+                "bot"
+            );
+
+            return;
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * UNKNOWN RESPONSE
+         * --------------------------------------------------------
+         */
+
+        printMessage(
+            `ℹ️ Backend returned a response, but the client does not
+             recognize its format.`,
+            "bot"
+        );
+    }
+
+
+    /*
+     * ============================================================
+     * MICROPHONE RECORDING
+     * ============================================================
+     */
+
+    async function toggleAudioRecording() {
+
+        if (!isRecordingAudio) {
+
+            await startAudioRecording();
+
+        }
+        else {
+
+            stopAudioRecording();
+
+        }
+    }
+
+
+    /*
+     * ============================================================
+     * START RECORDING
+     * ============================================================
+     */
+
+    async function startAudioRecording() {
+
+        /*
+         * Check browser support.
+         */
+
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia) {
+
+            printMessage(
+                `❌ <b>Microphone Not Supported</b><br>
+                 Your browser does not support microphone recording.`,
+                "bot"
+            );
+
+            return;
+        }
+
+
+        if (!window.MediaRecorder) {
+
+            printMessage(
+                `❌ <b>Recording Not Supported</b><br>
+                 This browser does not support the MediaRecorder API.`,
+                "bot"
+            );
+
+            return;
+        }
+
+
+        try {
+
+            /*
+             * Request microphone permission.
+             */
+
+            const stream =
+                await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
+
+
+            /*
+             * Find a MIME type supported by this browser.
+             */
+
+            const mimeType =
+                getSupportedAudioMimeType();
+
+
+            /*
+             * Create MediaRecorder.
+             */
+
+            if (mimeType) {
+
+                mediaRecorder =
+                    new MediaRecorder(stream, {
+                        mimeType: mimeType
+                    });
+
+            }
+            else {
+
+                mediaRecorder =
+                    new MediaRecorder(stream);
+            }
+
+
+            audioChunks = [];
+
+
+            /*
+             * Receive audio chunks.
+             */
+
+            mediaRecorder.ondataavailable =
+                function (event) {
+
+                    if (event.data &&
+                        event.data.size > 0) {
+
+                        audioChunks.push(event.data);
+                    }
+                };
+
+
+            /*
+             * Recording stopped.
+             */
+
+            mediaRecorder.onstop =
+                async function () {
+
+                    /*
+                     * Always release microphone hardware.
+                     */
+
+                    stream.getTracks().forEach(
+                        track => track.stop()
+                    );
+
+
+                    await processRecordedAudio();
+                };
+
+
+            mediaRecorder.onerror =
+                function (event) {
+
+                    console.error(
+                        "MediaRecorder error:",
+                        event
+                    );
+
+                    stream.getTracks().forEach(
+                        track => track.stop()
+                    );
+
+                    resetRecordingUI();
+
+                    printMessage(
+                        `❌ <b>Recording Error</b><br>
+                         The browser could not complete the recording.`,
+                        "bot"
+                    );
+                };
+
+
+            /*
+             * Start recording.
+             */
+
+            mediaRecorder.start(250);
+
+            isRecordingAudio = true;
+
+            micButton.classList.add("recording");
+            micButton.innerText = "🛑";
+
+            userInput.placeholder =
+                "Recording live voice note... Tap red button to stop.";
+
+            sendButton.disabled = true;
+
+            setStatus("🎙️ Recording...");
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Microphone permission/stream error:",
+                error
+            );
+
+
+            resetRecordingUI();
+
+
+            if (error.name === "NotAllowedError") {
+
+                printMessage(
+                    `❌ <b>Microphone Permission Denied</b><br>
+                     Please allow microphone access in your browser
+                     and try again.`,
+                    "bot"
+                );
+            }
+
+            else if (error.name === "NotFoundError") {
+
+                printMessage(
+                    `❌ <b>No Microphone Found</b><br>
+                     Please connect or enable a microphone.`,
+                    "bot"
+                );
+            }
+
+            else {
+
+                printMessage(
+                    `❌ <b>Microphone Error</b><br>
+                     ${escapeHtml(error.message || "Unknown error")}`,
+                    "bot"
+                );
+            }
+        }
+    }
+
+
+    /*
+     * ============================================================
+     * STOP RECORDING
+     * ============================================================
+     */
+
+    function stopAudioRecording() {
+
+        if (
+            mediaRecorder &&
+            mediaRecorder.state !== "inactive"
+        ) {
+
+            mediaRecorder.stop();
+        }
+
+        isRecordingAudio = false;
+
+        micButton.classList.remove("recording");
+        micButton.innerText = "⏳";
+
+        userInput.placeholder =
+            "Uploading voice note...";
+
+        setStatus("Processing voice note...");
+    }
+
+
+    /*
+     * ============================================================
+     * PROCESS RECORDED AUDIO
+     * ============================================================
+     */
+
+    async function processRecordedAudio() {
+
+        try {
+
+            if (!audioChunks.length) {
+
+                throw new Error(
+                    "No audio data was captured."
+                );
+            }
+
+
+            /*
+             * Determine the MIME type.
+             */
+
+            const mimeType =
+                audioChunks[0].type ||
+                "audio/webm";
+
+
+            /*
+             * Create the actual audio Blob.
+             */
+
+            const audioBlob =
+                new Blob(audioChunks, {
+                    type: mimeType
+                });
+
+
+            console.log(
+                "Recorded audio size:",
+                audioBlob.size,
+                "bytes"
+            );
+
+
+            if (audioBlob.size === 0) {
+
+                throw new Error(
+                    "The recorded audio file is empty."
+                );
+            }
+
+
+            /*
+             * Prepare multipart/form-data.
+             */
+
+            const formData = new FormData();
+
+            formData.append(
+                "audio",
+                audioBlob,
+                getAudioFilename(mimeType)
+            );
+
+
+            /*
+             * Send actual recorded audio to backend.
+             *
+             * DO NOT manually set Content-Type here.
+             *
+             * The browser automatically adds the correct
+             * multipart/form-data boundary.
+             */
+
+            const response =
+                await fetch(TRANSCRIBE_URL, {
+                    method: "POST",
+                    body: formData
+                });
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `Transcription service returned HTTP ${response.status}`
+                );
+            }
+
+
+            const responseData =
+                await response.json();
+
+
+            console.log(
+                "Transcription response:",
+                responseData
+            );
+
+
+            /*
+             * Accept a few common response formats.
+             */
+
+            const transcript =
+                responseData.transcript ||
+                responseData.text ||
+                responseData.transcription;
+
+
+            if (!transcript ||
+                !String(transcript).trim()) {
+
+                throw new Error(
+                    "Transcription service returned no transcript."
+                );
+            }
+
+
+            const cleanTranscript =
+                String(transcript).trim();
+
+
+            /*
+             * Show the actual recognized speech.
+             */
+
+            printMessage(
+                `🎙️ <i>Voice Note Parsed:</i><br>
+                 "${escapeHtml(cleanTranscript)}"`,
+                "bot"
+            );
+
+
+            /*
+             * Put transcript into text field so user can see it.
+             */
+
+            userInput.value = cleanTranscript;
+
+
+            /*
+             * Automatically send the recognized speech through
+             * the SAME marketplace pipeline as typed text.
+             */
+
+            printMessage(
+                cleanTranscript,
+                "user"
+            );
+
+            userInput.value = "";
+
+            await processUserText(cleanTranscript);
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Voice transcription error:",
+                error
+            );
+
+
+            printMessage(
+                `❌ <b>Voice Processing Failed</b><br>
+                 ${escapeHtml(
+                     error.message ||
+                     "Could not process the voice note."
+                 )}`,
+                "bot"
+            );
+
+            setStatus("Voice processing failed");
+        }
+
+
+        finally {
+
+            audioChunks = [];
+
+            mediaRecorder = null;
+
+            resetRecordingUI();
+        }
+    }
+
+
+    /*
+     * ============================================================
+     * MIME TYPE DETECTION
+     * ============================================================
+     */
+
+    function getSupportedAudioMimeType() {
+
+        const types = [
+            "audio/webm;codecs=opus",
+            "audio/webm",
+            "audio/ogg;codecs=opus",
+            "audio/mp4",
+            "audio/wav"
+        ];
+
+
+        for (const type of types) {
+
+            if (
+                MediaRecorder.isTypeSupported &&
+                MediaRecorder.isTypeSupported(type)
+            ) {
+
+                return type;
+            }
+        }
+
+
+        return "";
+    }
+
+
+    /*
+     * ============================================================
+     * AUDIO FILENAME
+     * ============================================================
+     */
+
+    function getAudioFilename(mimeType) {
+
+        if (mimeType.includes("ogg")) {
+            return "voice-note.ogg";
+        }
+
+        if (mimeType.includes("mp4")) {
+            return "voice-note.mp4";
+        }
+
+        if (mimeType.includes("wav")) {
+            return "voice-note.wav";
+        }
+
+        return "voice-note.webm";
+    }
+
+
+    /*
+     * ============================================================
+     * RESET RECORDING UI
+     * ============================================================
+     */
+
+    function resetRecordingUI() {
+
+        isRecordingAudio = false;
+
+        micButton.classList.remove("recording");
+
+        micButton.innerText = "🎙️";
+
+        userInput.placeholder =
+            "Type or tap mic to talk...";
+
+        sendButton.disabled = false;
+
+        if (statusElement.textContent !== "Ready") {
+            setStatus("Ready");
+        }
+    }
+
+
+    /*
+     * ============================================================
+     * HTML ESCAPING
+     * ============================================================
+     */
+
+    function escapeHtml(value) {
+
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+
+    /*
+     * ============================================================
+     * ENTER KEY SUPPORT
+     * ============================================================
+     */
+
+    userInput.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (event.key === "Enter") {
+
+                event.preventDefault();
+
+                handleSend();
+            }
+        }
+    );
 </script>
+
 </body>
 </html>
+
