@@ -1,785 +1,1757 @@
-const GCP_URL =
-    "https://patcha-market-blitz-core-252497578867.us-central1.run.app";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-let lastActiveListingId = "demo-blitz-id";
-let activeItem = "Produce";
-let activeWeight = 0;
+    <title>PatchaMarket Web Client Emulator</title>
 
-
-// ============================================================
-// SEND TEXT TO PATCHAMARKET
-// ============================================================
-
-async function handleSend() {
-
-    const inputField =
-        document.getElementById("userInput");
-
-    const queryText =
-        inputField.value.trim();
-
-    if (!queryText) return;
-
-    printMessage(
-        queryText,
-        "user"
-    );
-
-    inputField.value = "";
-
-    const lowerText =
-        queryText.toLowerCase();
-
-    const textParts =
-        queryText.split(/\s+/);
-
-    let payload = {};
-
-    // --------------------------------------------------------
-    // MARKETPLACE
-    // --------------------------------------------------------
-
-    if (
-        lowerText.includes("list") ||
-        lowerText.includes("browse") ||
-        lowerText.includes("view") ||
-        lowerText.includes("goods") ||
-        lowerText.includes("market")
-    ) {
-
-        let detectedHood = "bengaluru";
-
-        if (lowerText.includes("koramangala")) {
-            detectedHood = "koramangala";
-        }
-        else if (lowerText.includes("mahadevpura")) {
-            detectedHood = "mahadevpura";
-        }
-        else if (lowerText.includes("hsr")) {
-            detectedHood = "hsr";
-        }
-        else if (lowerText.includes("indiranagar")) {
-            detectedHood = "indiranagar";
-        }
-        else if (lowerText.includes("whitefield")) {
-            detectedHood = "whitefield";
+    <style>
+        * {
+            box-sizing: border-box;
         }
 
-        payload = {
-            action: "view_marketplace",
-            hood: detectedHood
-        };
-    }
+        body {
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Helvetica,
+                Arial,
+                sans-serif;
 
-    // --------------------------------------------------------
-    // WALLET
-    // --------------------------------------------------------
+            background-color: #dadbd4;
+            margin: 0;
+            padding: 20px;
 
-    else if (
-        lowerText.includes("wallet") ||
-        lowerText.includes("balance") ||
-        lowerText.includes("profile") ||
-        lowerText.includes("credits")
-    ) {
+            display: flex;
+            justify-content: center;
+            align-items: center;
 
-        payload = {
-            action: "view_wallet",
-            user_id: "user_bengaluru_test"
-        };
-    }
+            min-height: 100vh;
+        }
 
-    // --------------------------------------------------------
-    // ID + WEIGHT CLAIM
-    // Example:
-    // 8bfdc94c 3.5
-    // --------------------------------------------------------
+        .smartphone {
+            width: 360px;
+            height: 640px;
 
-    else if (
-        textParts.length >= 2 &&
-        !isNaN(parseFloat(textParts[1]))
-    ) {
+            background: white;
 
-        payload = {
-            action: "claim_item",
-            listing_id: textParts[0],
-            claim_weight: parseFloat(textParts[1])
-        };
-    }
+            border: 12px solid #222;
+            border-radius: 36px;
 
-    // --------------------------------------------------------
-    // NUMBER-ONLY CLAIM
-    // Example:
-    // 3.5
-    // --------------------------------------------------------
+            display: flex;
+            flex-direction: column;
 
-    else if (
-        !isNaN(queryText) &&
-        queryText !== ""
-    ) {
+            overflow: hidden;
 
-        payload = {
-            action: "claim_item",
-            listing_id: lastActiveListingId,
-            claim_weight: parseFloat(queryText)
-        };
-    }
+            box-shadow:
+                0 12px 24px rgba(0, 0, 0, 0.3);
 
-    // --------------------------------------------------------
-    // DONOR NATURAL LANGUAGE
-    // --------------------------------------------------------
+            position: relative;
+        }
 
-    else {
+        .top-bar {
+            background: #075e54;
+            color: white;
 
-        payload = {
-            action: "list_surplus",
-            text: queryText,
-            user_id: "user_bengaluru_test"
-        };
-    }
+            padding: 16px 12px;
 
+            font-weight: bold;
+            font-size: 16px;
 
-    // ========================================================
-    // SEND REQUEST TO CLOUD RUN
-    // ========================================================
+            display: flex;
+            align-items: center;
 
-    try {
+            gap: 10px;
 
-        const output = await fetch(
-            GCP_URL,
-            {
-                method: "POST",
+            box-shadow:
+                0 2px 4px rgba(0, 0, 0, 0.1);
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+            flex-shrink: 0;
+        }
 
-                body: JSON.stringify(payload)
+        .avatar {
+            width: 32px;
+            height: 32px;
+
+            background: #128c7e;
+
+            border-radius: 50%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 18px;
+
+            flex-shrink: 0;
+        }
+
+        .chat-body {
+            flex: 1;
+
+            padding: 12px;
+
+            background: #efeae2;
+
+            overflow-y: auto;
+
+            display: flex;
+            flex-direction: column;
+
+            gap: 8px;
+
+            min-height: 0;
+        }
+
+        .bubble {
+            max-width: 80%;
+
+            padding: 8px 12px;
+
+            border-radius: 8px;
+
+            font-size: 14px;
+
+            line-height: 1.4;
+
+            box-shadow:
+                0 1px 1px rgba(0, 0, 0, 0.1);
+
+            word-wrap: break-word;
+        }
+
+        .user {
+            background: #e7ffdb;
+
+            align-self: flex-end;
+
+            border-top-right-radius: 0;
+        }
+
+        .bot {
+            background: white;
+
+            align-self: flex-start;
+
+            border-top-left-radius: 0;
+        }
+
+        .input-tray {
+            padding: 10px;
+
+            background: #f0f0f0;
+
+            display: flex;
+            gap: 6px;
+
+            align-items: center;
+
+            flex-shrink: 0;
+        }
+
+        input {
+            flex: 1;
+
+            min-width: 0;
+
+            padding: 10px 14px;
+
+            border: none;
+
+            border-radius: 20px;
+
+            outline: none;
+
+            font-size: 14px;
+
+            background: white;
+        }
+
+        button {
+            background: #075e54;
+            color: white;
+
+            border: none;
+
+            border-radius: 50%;
+
+            width: 38px;
+            height: 38px;
+
+            cursor: pointer;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 16px;
+
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.2);
+
+            flex-shrink: 0;
+        }
+
+        button:hover {
+            filter: brightness(1.08);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .mic-btn {
+            background: #128c7e;
+            color: white;
+
+            border: none;
+
+            border-radius: 50%;
+
+            width: 38px;
+            height: 38px;
+
+            cursor: pointer;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 16px;
+
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.2);
+
+            transition: all 0.2s ease;
+
+            margin-right: 4px;
+
+            position: relative;
+
+            z-index: 100;
+        }
+
+        .mic-btn.recording {
+            background: #d32f2f;
+
+            transform: scale(1.1);
+
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0% {
+                box-shadow:
+                    0 0 0 0 rgba(211, 47, 47, 0.7);
             }
-        );
 
-        if (!output.ok) {
-            throw new Error(
-                `Server returned HTTP ${output.status}`
-            );
+            70% {
+                box-shadow:
+                    0 0 0 10px rgba(211, 47, 47, 0);
+            }
+
+            100% {
+                box-shadow:
+                    0 0 0 0 rgba(211, 47, 47, 0);
+            }
         }
 
-        const responseData =
-            await output.json();
+        .status {
+            font-size: 11px;
+            color: #777;
+
+            text-align: center;
+
+            padding: 3px 0 0;
+
+            background: #f0f0f0;
+        }
+
+        code {
+            font-size: 12px;
+        }
+    </style>
+</head>
 
 
-        // ====================================================
-        // MARKETPLACE RESPONSE
-        // ====================================================
+<body>
 
-        if (responseData.items) {
+    <div class="smartphone">
 
-            if (
-                responseData.items.length === 0
-            ) {
+        <!-- ================================================= -->
+        <!-- HEADER                                            -->
+        <!-- ================================================= -->
 
-                printMessage(
-                    `🛒 <b>PatchaMarket Marketplace:</b><br>
-                    No active goods available in your neighborhood registry right now.`,
-                    "bot"
+        <div class="top-bar">
+
+            <div class="avatar">
+                🌿
+            </div>
+
+            <div>
+                PatchaMarket Ledger Bot
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- CHAT                                               -->
+        <!-- ================================================= -->
+
+        <div
+            id="chatContainer"
+            class="chat-body"
+        >
+
+            <div class="bubble bot">
+
+                Welcome to the PatchaMarket
+                Bangalore pilot network! 🌍
+
+                <br><br>
+
+                <b>Try typing:</b>
+
+                <br>
+
+                <i>
+                    "I have 12 kg of extra fresh
+                    potatoes from my terrace garden
+                    ripening fast in Koramangala!"
+                </i>
+
+                <br><br>
+
+                <b>Or tap 🎙️ and speak.</b>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- STATUS                                             -->
+        <!-- ================================================= -->
+
+        <div
+            id="statusText"
+            class="status"
+        >
+            Ready
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- INPUT                                              -->
+        <!-- ================================================= -->
+
+        <div class="input-tray">
+
+            <button
+                id="micButton"
+                class="mic-btn"
+                type="button"
+                onclick="toggleAudioRecording()"
+                title="Record voice note"
+            >
+                🎙️
+            </button>
+
+
+            <input
+                type="text"
+                id="userInput"
+                placeholder="Type or tap mic to talk..."
+                autocomplete="off"
+                onkeydown="handleInputKeydown(event)"
+            >
+
+
+            <button
+                id="sendButton"
+                type="button"
+                onclick="handleSend()"
+                title="Send"
+            >
+                ➔
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- ALL JAVASCRIPT MUST BE INSIDE THIS SCRIPT TAG        -->
+    <!-- ===================================================== -->
+
+    <script>
+
+        // =====================================================
+        // CONFIGURATION
+        // =====================================================
+
+        const GCP_URL =
+            "https://patcha-market-blitz-core-252497578867.us-central1.run.app";
+
+
+        // =====================================================
+        // APPLICATION STATE
+        // =====================================================
+
+        let lastActiveListingId =
+            "demo-blitz-id";
+
+        let activeItem =
+            "Produce";
+
+        let activeWeight =
+            0;
+
+
+        // =====================================================
+        // AUDIO STATE
+        // =====================================================
+
+        let mediaRecorder =
+            null;
+
+        let audioChunks =
+            [];
+
+        let isRecordingAudio =
+            false;
+
+
+        // =====================================================
+        // OPTIONAL SOUND EFFECTS
+        // =====================================================
+        //
+        // These are intentionally disabled.
+        // External audio URLs such as mixkit.co are not
+        // direct audio files and can cause browser errors.
+        //
+        // =====================================================
+
+
+        // =====================================================
+        // KEYBOARD ENTER
+        // =====================================================
+
+        function handleInputKeydown(event) {
+
+            if (event.key === "Enter") {
+
+                event.preventDefault();
+
+                handleSend();
+            }
+        }
+
+
+        // =====================================================
+        // STATUS DISPLAY
+        // =====================================================
+
+        function setStatus(text) {
+
+            const status =
+                document.getElementById("statusText");
+
+            status.innerText =
+                text;
+        }
+
+
+        // =====================================================
+        // PRINT CHAT MESSAGE
+        // =====================================================
+
+        function printMessage(
+            msg,
+            senderType
+        ) {
+
+            const pane =
+                document.getElementById(
+                    "chatContainer"
                 );
 
+            const box =
+                document.createElement(
+                    "div"
+                );
+
+            box.className =
+                `bubble ${senderType}`;
+
+            box.innerHTML =
+                msg;
+
+            pane.appendChild(
+                box
+            );
+
+            pane.scrollTop =
+                pane.scrollHeight;
+        }
+
+
+        // =====================================================
+        // SEND TEXT TO PATCHAMARKET
+        // =====================================================
+
+        async function handleSend() {
+
+            const inputField =
+                document.getElementById(
+                    "userInput"
+                );
+
+            const sendButton =
+                document.getElementById(
+                    "sendButton"
+                );
+
+            const queryText =
+                inputField.value.trim();
+
+
+            if (!queryText) {
                 return;
             }
 
-            let marketList =
-                `🛒 <b>Available Goods in Bengaluru Matrix:</b><br><br>`;
 
-            responseData.items.forEach(
-                prod => {
-
-                    const distInfo =
-                        prod.distance !== undefined
-                        ?
-                        `<br>&nbsp;&nbsp;📍 Proximity:
-                        <span style="color:#075e54;font-weight:bold;">
-                        ${prod.distance} km away
-                        </span>`
-                        :
-                        "";
-
-                    marketList +=
-                        `• <b>ID: ${prod.id}</b> |
-                        <b>${prod.item.toUpperCase()}</b>
-                        ${distInfo}<br>
-                        &nbsp;&nbsp;Supply:
-                        <b>${prod.weight} kg</b>
-                        (${prod.urgency} Perishability)<br>
-                        &nbsp;&nbsp;Cost:
-                        ${prod.credits} Credits<br><br>`;
-                }
-            );
-
-            marketList +=
-                `<i>👉 To claim any portion of an item,
-                reply with its <b>ID followed by a space
-                and the weight</b> you want!</i>`;
+            // -------------------------------------------------
+            // Show user message
+            // -------------------------------------------------
 
             printMessage(
-                marketList,
-                "bot"
+                queryText,
+                "user"
             );
 
-            return;
-        }
+            inputField.value = "";
 
+            sendButton.disabled = true;
 
-        // ====================================================
-        // WALLET RESPONSE
-        // ====================================================
-
-        if (responseData.wallet) {
-
-            const w =
-                responseData.wallet;
-
-            let walletCard =
-                `💳 <b>PatchaMarket Ledger Card:</b><br>`;
-
-            walletCard +=
-                `• Account Holder:
-                <code>${w.user}</code><br>`;
-
-            walletCard +=
-                `• Total Credits Earned:
-                <span style="color:green;font-weight:bold;">
-                +${w.earned} pts
-                </span><br>`;
-
-            walletCard +=
-                `• Total Credits Escrowed:
-                <span style="color:red;font-weight:bold;">
-                -${w.spent} pts
-                </span><br><br>`;
-
-            walletCard +=
-                `💰 <b>Net Spendable Balance:
-                <span style="font-size:16px;color:#075e54;">
-                ${w.balance} Credits
-                </span></b>`;
-
-            printMessage(
-                walletCard,
-                "bot"
+            setStatus(
+                "Connecting to PatchaMarket..."
             );
 
-            return;
-        }
+
+            const lowerText =
+                queryText.toLowerCase();
+
+            const textParts =
+                queryText.split(/\s+/);
+
+            let payload = {};
 
 
-        // ====================================================
-        // LISTING CREATION RESPONSE
-        // ====================================================
-
-        if (
-            responseData.credits_earned ||
-            (
-                responseData.data &&
-                responseData.data.item
-            )
-        ) {
-
-            lastActiveListingId =
-                responseData.listing_id ||
-                "demo-blitz-id";
-
-            activeItem =
-                responseData.data.item;
-
-            activeWeight =
-                parseFloat(
-                    responseData.data.weight_kg
-                );
-
-            const points =
-                responseData.credits_earned ||
-                Math.round(
-                    activeWeight * 10
-                );
-
-            printMessage(
-                `🤖 <b>Vertex AI Evaluation Matrix:</b><br>
-                • Item Extracted:
-                <b>${activeItem}</b><br>
-                • Scaled Weight:
-                <b>${activeWeight} kg</b><br>
-                • Perishability Urgency:
-                <b>${responseData.data.urgency || "HIGH"}</b>
-                <br><br>
-                💰 <b>+${points} Community Credits</b>
-                committed to your profile ledger wallet.
-                <br><br>
-                <i>👉 To claim a portion of this specific
-                item immediately, simply reply typing
-                just the number of kilograms you want!</i>`,
-                "bot"
-            );
-
-            return;
-        }
-
-
-        // ====================================================
-        // CLAIM RESPONSE
-        // ====================================================
-
-        if (
-            responseData.remaining_inventory !== undefined ||
-            (
-                responseData.message &&
-                responseData.message
-                    .toLowerCase()
-                    .includes("claim")
-            )
-        ) {
-
-            const remInventory =
-                responseData.remaining_inventory !== undefined
-                ?
-                responseData.remaining_inventory
-                :
-                0;
-
-            printMessage(
-                `✅ <b>Atomic Transaction Settled!</b><br>
-                • Status:
-                <span style="color:#075e54;font-weight:bold;">
-                HELD IN ESCROW
-                </span><br>
-                • Remaining item supply available in database:
-                <b>${remInventory} kg</b>`,
-                "bot"
-            );
-
-            return;
-        }
-
-
-        // ====================================================
-        // GENERIC RESPONSE
-        // ====================================================
-
-        if (responseData.error) {
-
-            printMessage(
-                `❌ <b>Server Error</b><br>
-                ${responseData.error}`,
-                "bot"
-            );
-
-            return;
-        }
-
-        printMessage(
-            `✅ ${responseData.message || "Request completed."}`,
-            "bot"
-        );
-
-    }
-    catch (error) {
-
-        console.error(
-            "Cloud Run request error:",
-            error
-        );
-
-        printMessage(
-            `❌ <b>Live Synchronicity Connection Failure:</b><br>
-            ${error.message}`,
-            "bot"
-        );
-    }
-}
-
-
-// ============================================================
-// PRINT CHAT MESSAGE
-// ============================================================
-
-function printMessage(
-    msg,
-    senderType
-) {
-
-    const pane =
-        document.getElementById(
-            "chatContainer"
-        );
-
-    const box =
-        document.createElement(
-            "div"
-        );
-
-    box.className =
-        `bubble ${senderType}`;
-
-    box.innerHTML = msg;
-
-    pane.appendChild(box);
-
-    pane.scrollTop =
-        pane.scrollHeight;
-}
-
-
-// ============================================================
-// REAL MICROPHONE RECORDING
-// ============================================================
-
-let mediaRecorder = null;
-
-let audioChunks = [];
-
-let isRecordingAudio = false;
-
-
-async function toggleAudioRecording() {
-
-    const micBtn =
-        document.getElementById(
-            "micButton"
-        );
-
-    const inputField =
-        document.getElementById(
-            "userInput"
-        );
-
-
-    // ========================================================
-    // START RECORDING
-    // ========================================================
-
-    if (!isRecordingAudio) {
-
-        try {
-
-            const stream =
-                await navigator.mediaDevices
-                    .getUserMedia({
-                        audio: true
-                    });
-
-
-            audioChunks = [];
-
-
-            // Browser-compatible MIME selection
-            let mimeType = "";
+            // =================================================
+            // ROUTE 1: MARKETPLACE
+            // =================================================
 
             if (
-                MediaRecorder.isTypeSupported(
-                    "audio/webm;codecs=opus"
-                )
+                lowerText.includes("list") ||
+                lowerText.includes("browse") ||
+                lowerText.includes("view") ||
+                lowerText.includes("goods") ||
+                lowerText.includes("market")
             ) {
 
-                mimeType =
-                    "audio/webm;codecs=opus";
+                let detectedHood =
+                    "bengaluru";
 
+
+                if (
+                    lowerText.includes(
+                        "koramangala"
+                    )
+                ) {
+
+                    detectedHood =
+                        "koramangala";
+                }
+
+                else if (
+                    lowerText.includes(
+                        "mahadevpura"
+                    )
+                ) {
+
+                    detectedHood =
+                        "mahadevpura";
+                }
+
+                else if (
+                    lowerText.includes("hsr")
+                ) {
+
+                    detectedHood =
+                        "hsr";
+                }
+
+                else if (
+                    lowerText.includes(
+                        "indiranagar"
+                    )
+                ) {
+
+                    detectedHood =
+                        "indiranagar";
+                }
+
+                else if (
+                    lowerText.includes(
+                        "whitefield"
+                    )
+                ) {
+
+                    detectedHood =
+                        "whitefield";
+                }
+
+
+                payload = {
+
+                    action:
+                        "view_marketplace",
+
+                    hood:
+                        detectedHood
+                };
             }
+
+
+            // =================================================
+            // ROUTE 2: WALLET
+            // =================================================
+
             else if (
-                MediaRecorder.isTypeSupported(
-                    "audio/webm"
-                )
+                lowerText.includes("wallet") ||
+                lowerText.includes("balance") ||
+                lowerText.includes("profile") ||
+                lowerText.includes("credits")
             ) {
 
-                mimeType =
-                    "audio/webm";
+                payload = {
 
+                    action:
+                        "view_wallet",
+
+                    user_id:
+                        "user_bengaluru_test"
+                };
             }
+
+
+            // =================================================
+            // ROUTE 3: ID + WEIGHT CLAIM
+            //
+            // Example:
+            // 8bfdc94c 3.5
+            // =================================================
+
             else if (
-                MediaRecorder.isTypeSupported(
-                    "audio/mp4"
+                textParts.length >= 2 &&
+                !isNaN(
+                    parseFloat(
+                        textParts[1]
+                    )
                 )
             ) {
 
-                mimeType =
-                    "audio/mp4";
+                payload = {
+
+                    action:
+                        "claim_item",
+
+                    listing_id:
+                        textParts[0],
+
+                    claim_weight:
+                        parseFloat(
+                            textParts[1]
+                        )
+                };
             }
 
 
-            mediaRecorder =
-                mimeType
-                ?
-                new MediaRecorder(
-                    stream,
-                    { mimeType }
-                )
-                :
-                new MediaRecorder(stream);
+            // =================================================
+            // ROUTE 4: NUMBER-ONLY CLAIM
+            //
+            // Example:
+            // 3.5
+            // =================================================
+
+            else if (
+                !isNaN(queryText) &&
+                queryText !== ""
+            ) {
+
+                payload = {
+
+                    action:
+                        "claim_item",
+
+                    listing_id:
+                        lastActiveListingId,
+
+                    claim_weight:
+                        parseFloat(queryText)
+                };
+            }
 
 
-            // ------------------------------------------------
-            // Collect audio data
-            // ------------------------------------------------
+            // =================================================
+            // ROUTE 5: DONOR NATURAL LANGUAGE
+            // =================================================
 
-            mediaRecorder.ondataavailable =
-                event => {
+            else {
+
+                payload = {
+
+                    action:
+                        "list_surplus",
+
+                    text:
+                        queryText,
+
+                    user_id:
+                        "user_bengaluru_test"
+                };
+            }
+
+
+            // =================================================
+            // SEND TO CLOUD RUN
+            // =================================================
+
+            try {
+
+                console.log(
+                    "Sending payload:",
+                    payload
+                );
+
+
+                const output =
+                    await fetch(
+                        GCP_URL,
+                        {
+                            method:
+                                "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                )
+                        }
+                    );
+
+
+                if (!output.ok) {
+
+                    throw new Error(
+                        `Server returned HTTP ${output.status}`
+                    );
+                }
+
+
+                const responseData =
+                    await output.json();
+
+
+                console.log(
+                    "Cloud Run response:",
+                    responseData
+                );
+
+
+                // =================================================
+                // SERVER ERROR
+                // =================================================
+
+                if (
+                    responseData.error
+                ) {
+
+                    printMessage(
+
+                        `❌ <b>Server Error</b><br>
+                        ${escapeHtml(
+                            responseData.error
+                        )}`,
+
+                        "bot"
+                    );
+
+                    return;
+                }
+
+
+                // =================================================
+                // MARKETPLACE RESPONSE
+                // =================================================
+
+                if (
+                    responseData.items
+                ) {
 
                     if (
-                        event.data &&
-                        event.data.size > 0
+                        responseData.items.length === 0
                     ) {
 
-                        audioChunks.push(
-                            event.data
+                        printMessage(
+
+                            `🛒 <b>PatchaMarket Marketplace:</b>
+                            <br><br>
+                            No active goods available
+                            in your neighborhood registry
+                            right now.`,
+
+                            "bot"
+                        );
+
+                        return;
+                    }
+
+
+                    let marketList =
+                        `🛒 <b>Available Goods in Bengaluru Matrix:</b>
+                        <br><br>`;
+
+
+                    responseData.items.forEach(
+                        prod => {
+
+                            const distance =
+                                prod.distance !== undefined
+                                ?
+                                prod.distance
+                                :
+                                "—";
+
+
+                            marketList +=
+
+                                `• <b>ID: ${escapeHtml(
+                                    String(prod.id)
+                                )}</b>
+                                |
+                                <b>${escapeHtml(
+                                    String(prod.item)
+                                ).toUpperCase()}</b>
+                                <br>
+
+                                &nbsp;&nbsp;📍
+                                Proximity:
+                                <span
+                                    style="
+                                        color:#075e54;
+                                        font-weight:bold;
+                                    "
+                                >
+                                    ${distance} km away
+                                </span>
+
+                                <br>
+
+                                &nbsp;&nbsp;Supply:
+                                <b>${prod.weight} kg</b>
+                                (${escapeHtml(
+                                    String(prod.urgency)
+                                )} Perishability)
+
+                                <br>
+
+                                &nbsp;&nbsp;Cost:
+                                ${prod.credits}
+                                Credits
+
+                                <br><br>`;
+                        }
+                    );
+
+
+                    marketList +=
+
+                        `<i>
+                        👉 To claim any portion of an item,
+                        reply with its
+                        <b>ID followed by a space and
+                        the weight</b> you want!
+                        </i>`;
+
+
+                    printMessage(
+                        marketList,
+                        "bot"
+                    );
+
+                    return;
+                }
+
+
+                // =================================================
+                // WALLET RESPONSE
+                // =================================================
+
+                if (
+                    responseData.wallet
+                ) {
+
+                    const w =
+                        responseData.wallet;
+
+
+                    let walletCard =
+
+                        `💳 <b>
+                        PatchaMarket Ledger Card:
+                        </b><br>`;
+
+
+                    walletCard +=
+
+                        `• Account Holder:
+                        <code>${escapeHtml(
+                            String(w.user)
+                        )}</code><br>`;
+
+
+                    walletCard +=
+
+                        `• Total Credits Earned:
+                        <span
+                            style="
+                                color:green;
+                                font-weight:bold;
+                            "
+                        >
+                            +${w.earned} pts
+                        </span>
+                        <br>`;
+
+
+                    walletCard +=
+
+                        `• Total Credits Escrowed:
+                        <span
+                            style="
+                                color:red;
+                                font-weight:bold;
+                            "
+                        >
+                            -${w.spent} pts
+                        </span>
+                        <br><br>`;
+
+
+                    walletCard +=
+
+                        `💰 <b>
+                        Net Spendable Balance:
+                        <span
+                            style="
+                                font-size:16px;
+                                color:#075e54;
+                            "
+                        >
+                            ${w.balance} Credits
+                        </span>
+                        </b>`;
+
+
+                    printMessage(
+                        walletCard,
+                        "bot"
+                    );
+
+                    return;
+                }
+
+
+                // =================================================
+                // LISTING CREATION RESPONSE
+                // =================================================
+
+                if (
+                    responseData.credits_earned !== undefined ||
+                    (
+                        responseData.data &&
+                        responseData.data.item
+                    )
+                ) {
+
+                    lastActiveListingId =
+                        responseData.listing_id ||
+                        "demo-blitz-id";
+
+
+                    activeItem =
+                        responseData.data.item;
+
+
+                    activeWeight =
+                        parseFloat(
+                            responseData.data.weight_kg
+                        );
+
+
+                    const points =
+                        responseData.credits_earned ||
+                        Math.round(
+                            activeWeight * 10
+                        );
+
+
+                    printMessage(
+
+                        `🤖 <b>
+                        Vertex AI Evaluation Matrix:
+                        </b>
+
+                        <br>
+
+                        • Item Extracted:
+                        <b>${escapeHtml(
+                            String(activeItem)
+                        )}</b>
+
+                        <br>
+
+                        • Scaled Weight:
+                        <b>${activeWeight} kg</b>
+
+                        <br>
+
+                        • Perishability Urgency:
+                        <b>${escapeHtml(
+                            String(
+                                responseData.data.urgency ||
+                                "HIGH"
+                            )
+                        )}</b>
+
+                        <br><br>
+
+                        💰 <b>
+                        +${points} Community Credits
+                        </b>
+                        committed to your profile
+                        ledger wallet.
+
+                        <br><br>
+
+                        <i>
+                        👉 To claim a portion of this
+                        specific item immediately,
+                        simply reply typing just the
+                        number of kilograms you want!
+                        </i>`,
+
+                        "bot"
+                    );
+
+                    return;
+                }
+
+
+                // =================================================
+                // CLAIM RESPONSE
+                // =================================================
+
+                if (
+                    responseData.remaining_inventory !==
+                    undefined
+                ) {
+
+                    const remInventory =
+                        responseData.remaining_inventory;
+
+
+                    printMessage(
+
+                        `✅ <b>
+                        Atomic Transaction Settled!
+                        </b>
+
+                        <br>
+
+                        • Status:
+                        <span
+                            style="
+                                color:#075e54;
+                                font-weight:bold;
+                            "
+                        >
+                            HELD IN ESCROW
+                        </span>
+
+                        <br>
+
+                        • Remaining item supply
+                        available in database:
+                        <b>${remInventory} kg</b>`,
+
+                        "bot"
+                    );
+
+                    return;
+                }
+
+
+                // =================================================
+                // GENERIC SUCCESS
+                // =================================================
+
+                printMessage(
+
+                    `✅ ${
+                        escapeHtml(
+                            String(
+                                responseData.message ||
+                                "Request completed."
+                            )
+                        )
+                    }`,
+
+                    "bot"
+                );
+
+            }
+
+
+            catch (error) {
+
+                console.error(
+                    "Cloud Run request error:",
+                    error
+                );
+
+
+                printMessage(
+
+                    `❌ <b>
+                    Live Synchronicity Connection Failure
+                    </b>
+                    <br>
+                    ${escapeHtml(
+                        error.message
+                    )}`,
+
+                    "bot"
+                );
+            }
+
+
+            finally {
+
+                sendButton.disabled =
+                    false;
+
+                setStatus(
+                    "Ready"
+                );
+            }
+        }
+
+
+        // =====================================================
+        // REAL MICROPHONE RECORDING
+        // =====================================================
+
+        async function toggleAudioRecording() {
+
+            const micBtn =
+                document.getElementById(
+                    "micButton"
+                );
+
+            const inputField =
+                document.getElementById(
+                    "userInput"
+                );
+
+
+            // =================================================
+            // START RECORDING
+            // =================================================
+
+            if (!isRecordingAudio) {
+
+                try {
+
+                    // -----------------------------------------
+                    // Browser microphone permission
+                    // -----------------------------------------
+
+                    if (
+                        !navigator.mediaDevices ||
+                        !navigator.mediaDevices.getUserMedia
+                    ) {
+
+                        throw new Error(
+                            "Microphone access is not supported by this browser."
                         );
                     }
-                };
 
 
-            // ------------------------------------------------
-            // Recording stopped
-            // ------------------------------------------------
-
-            mediaRecorder.onstop =
-                async () => {
-
-                    micBtn.innerText = "⏳";
-
-                    micBtn.disabled = true;
-
-                    inputField.placeholder =
-                        "Uploading voice note...";
+                    const stream =
+                        await navigator.mediaDevices
+                            .getUserMedia({
+                                audio: true
+                            });
 
 
-                    try {
-
-                        if (
-                            audioChunks.length === 0
-                        ) {
-
-                            throw new Error(
-                                "No audio was recorded."
-                            );
-                        }
+                    audioChunks =
+                        [];
 
 
-                        // ----------------------------------------
-                        // Create actual audio Blob
-                        // ----------------------------------------
+                    // -----------------------------------------
+                    // Select compatible recording format
+                    // -----------------------------------------
 
-                        const audioBlob =
-                            new Blob(
-                                audioChunks,
+                    let mimeType =
+                        "";
+
+
+                    if (
+                        MediaRecorder.isTypeSupported(
+                            "audio/webm;codecs=opus"
+                        )
+                    ) {
+
+                        mimeType =
+                            "audio/webm;codecs=opus";
+                    }
+
+                    else if (
+                        MediaRecorder.isTypeSupported(
+                            "audio/webm"
+                        )
+                    ) {
+
+                        mimeType =
+                            "audio/webm";
+                    }
+
+                    else if (
+                        MediaRecorder.isTypeSupported(
+                            "audio/mp4"
+                        )
+                    ) {
+
+                        mimeType =
+                            "audio/mp4";
+                    }
+
+
+                    console.log(
+                        "Selected microphone MIME type:",
+                        mimeType || "browser default"
+                    );
+
+
+                    // -----------------------------------------
+                    // Create recorder
+                    // -----------------------------------------
+
+                    if (mimeType) {
+
+                        mediaRecorder =
+                            new MediaRecorder(
+                                stream,
                                 {
-                                    type:
-                                        mediaRecorder.mimeType ||
-                                        "audio/webm"
+                                    mimeType:
+                                        mimeType
                                 }
                             );
 
+                    }
 
-                        console.log(
-                            "Audio recorded:",
-                            audioBlob.size,
-                            "bytes",
-                            audioBlob.type
-                        );
+                    else {
 
-
-                        // ----------------------------------------
-                        // Create multipart upload
-                        // ----------------------------------------
-
-                        const formData =
-                            new FormData();
-
-                        formData.append(
-                            "audio",
-                            audioBlob,
-                            "voice-note.webm"
-                        );
+                        mediaRecorder =
+                            new MediaRecorder(
+                                stream
+                            );
+                    }
 
 
-                        inputField.placeholder =
-                            "Sending voice note to server...";
+                    // -----------------------------------------
+                    // Collect audio chunks
+                    // -----------------------------------------
+
+                    mediaRecorder.ondataavailable =
+                        function(event) {
+
+                            if (
+                                event.data &&
+                                event.data.size > 0
+                            ) {
+
+                                audioChunks.push(
+                                    event.data
+                                );
+                            }
+                        };
 
 
-                        // ----------------------------------------
-                        // POST /transcribe
-                        // ----------------------------------------
+                    // -----------------------------------------
+                    // Handle recording stop
+                    // -----------------------------------------
 
-                        const response =
-                            await fetch(
-                                `${GCP_URL}/transcribe`,
-                                {
-                                    method: "POST",
-                                    body: formData
-                                }
+                    mediaRecorder.onstop =
+                        async function() {
+
+                            micBtn.innerText =
+                                "⏳";
+
+                            micBtn.disabled =
+                                true;
+
+                            inputField.disabled =
+                                true;
+
+                            inputField.placeholder =
+                                "Uploading voice note...";
+
+                            setStatus(
+                                "Processing voice note..."
                             );
 
-
-                        if (!response.ok) {
-
-                            let serverMessage =
-                                `HTTP ${response.status}`;
 
                             try {
 
-                                const errorData =
-                                    await response.json();
+                                // ---------------------------------
+                                // Make sure audio exists
+                                // ---------------------------------
 
                                 if (
-                                    errorData.error
+                                    audioChunks.length === 0
                                 ) {
 
-                                    serverMessage =
-                                        errorData.error;
+                                    throw new Error(
+                                        "No audio was recorded."
+                                    );
                                 }
 
+
+                                // ---------------------------------
+                                // Create Blob
+                                // ---------------------------------
+
+                                const actualMimeType =
+                                    mediaRecorder.mimeType ||
+                                    "audio/webm";
+
+
+                                const audioBlob =
+                                    new Blob(
+                                        audioChunks,
+                                        {
+                                            type:
+                                                actualMimeType
+                                        }
+                                    );
+
+
+                                console.log(
+                                    "Recorded audio:",
+                                    {
+                                        size:
+                                            audioBlob.size,
+
+                                        type:
+                                            audioBlob.type
+                                    }
+                                );
+
+
+                                if (
+                                    audioBlob.size === 0
+                                ) {
+
+                                    throw new Error(
+                                        "Recorded audio file is empty."
+                                    );
+                                }
+
+
+                                // ---------------------------------
+                                // FormData
+                                // ---------------------------------
+
+                                const formData =
+                                    new FormData();
+
+
+                                formData.append(
+                                    "audio",
+                                    audioBlob,
+                                    "voice-note.webm"
+                                );
+
+
+                                inputField.placeholder =
+                                    "Sending to Speech-to-Text...";
+
+
+                                setStatus(
+                                    "Sending audio to Cloud Run..."
+                                );
+
+
+                                console.log(
+                                    "Uploading audio to:",
+                                    `${GCP_URL}/transcribe`
+                                );
+
+
+                                // ---------------------------------
+                                // POST /transcribe
+                                // ---------------------------------
+
+                                const response =
+                                    await fetch(
+                                        `${GCP_URL}/transcribe`,
+                                        {
+                                            method:
+                                                "POST",
+
+                                            body:
+                                                formData
+                                        }
+                                    );
+
+
+                                console.log(
+                                    "Transcription HTTP status:",
+                                    response.status
+                                );
+
+
+                                // ---------------------------------
+                                // Read response
+                                // ---------------------------------
+
+                                let data;
+
+
+                                try {
+
+                                    data =
+                                        await response.json();
+
+                                }
+
+                                catch (jsonError) {
+
+                                    throw new Error(
+                                        `Server returned HTTP ${
+                                            response.status
+                                        } with an invalid JSON response.`
+                                    );
+                                }
+
+
+                                console.log(
+                                    "Transcription response:",
+                                    data
+                                );
+
+
+                                if (
+                                    !response.ok
+                                ) {
+
+                                    throw new Error(
+                                        data.error ||
+                                        `Transcription server returned HTTP ${
+                                            response.status
+                                        }`
+                                    );
+                                }
+
+
+                                if (
+                                    !data.success
+                                ) {
+
+                                    throw new Error(
+                                        data.error ||
+                                        "Speech recognition failed."
+                                    );
+                                }
+
+
+                                if (
+                                    !data.transcript
+                                ) {
+
+                                    throw new Error(
+                                        "Speech recognition returned an empty transcript."
+                                    );
+                                }
+
+
+                                // ---------------------------------
+                                // REAL TRANSCRIPT
+                                // ---------------------------------
+
+                                const transcript =
+                                    data.transcript.trim();
+
+
+                                printMessage(
+
+                                    `🎙️ <i>
+                                    Voice Note Parsed:
+                                    "${escapeHtml(
+                                        transcript
+                                    )}"
+                                    </i>`,
+
+                                    "bot"
+                                );
+
+
+                                // ---------------------------------
+                                // Put transcript in text box
+                                // ---------------------------------
+
+                                inputField.value =
+                                    transcript;
+
+
+                                inputField.placeholder =
+                                    "Sending transcript...";
+
+
+                                // ---------------------------------
+                                // Send transcript through normal
+                                // PatchaMarket pipeline
+                                // ---------------------------------
+
+                                await handleSend();
+
                             }
-                            catch (ignore) {}
 
-                            throw new Error(
-                                serverMessage
+
+                            catch (error) {
+
+                                console.error(
+                                    "Voice processing error:",
+                                    error
+                                );
+
+
+                                printMessage(
+
+                                    `❌ <b>
+                                    Voice Processing Failed
+                                    </b>
+                                    <br>
+                                    ${escapeHtml(
+                                        error.message
+                                    )}`,
+
+                                    "bot"
+                                );
+
+
+                                setStatus(
+                                    "Voice processing failed"
+                                );
+                            }
+
+
+                            finally {
+
+                                micBtn.disabled =
+                                    false;
+
+                                inputField.disabled =
+                                    false;
+
+                                micBtn.innerText =
+                                    "🎙️";
+
+                                inputField.placeholder =
+                                    "Type or tap mic to talk...";
+
+                            }
+                        };
+
+
+                    // -----------------------------------------
+                    // Start recording
+                    // -----------------------------------------
+
+                    mediaRecorder.start();
+
+                    isRecordingAudio =
+                        true;
+
+
+                    micBtn.classList.add(
+                        "recording"
+                    );
+
+                    micBtn.innerText =
+                        "🛑";
+
+
+                    inputField.placeholder =
+                        "Recording... Tap red button to stop.";
+
+
+                    setStatus(
+                        "🔴 Recording voice..."
+                    );
+
+
+                    console.log(
+                        "Microphone recording started."
+                    );
+
+                }
+
+
+                catch (error) {
+
+                    console.error(
+                        "Microphone error:",
+                        error
+                    );
+
+
+                    printMessage(
+
+                        `❌ <b>
+                        Microphone Permission Error
+                        </b>
+                        <br>
+                        ${escapeHtml(
+                            error.message
+                        )}`,
+
+                        "bot"
+                    );
+
+
+                    setStatus(
+                        "Microphone unavailable"
+                    );
+                }
+
+            }
+
+
+            // =================================================
+            // STOP RECORDING
+            // =================================================
+
+            else {
+
+                console.log(
+                    "Stopping microphone recording..."
+                );
+
+
+                if (
+                    mediaRecorder &&
+                    mediaRecorder.state !== "inactive"
+                ) {
+
+                    mediaRecorder.stop();
+
+
+                    if (
+                        mediaRecorder.stream
+                    ) {
+
+                        mediaRecorder.stream
+                            .getTracks()
+                            .forEach(
+                                track => {
+                                    track.stop();
+                                }
                             );
-                        }
-
-
-                        const data =
-                            await response.json();
-
-
-                        console.log(
-                            "Transcription response:",
-                            data
-                        );
-
-
-                        if (
-                            !data.success ||
-                            !data.transcript
-                        ) {
-
-                            throw new Error(
-                                data.error ||
-                                "Speech recognition returned no transcript."
-                            );
-                        }
-
-
-                        // ----------------------------------------
-                        // REAL TRANSCRIPT
-                        // ----------------------------------------
-
-                        const transcript =
-                            data.transcript.trim();
-
-
-                        printMessage(
-                            `🎙️ <i>Voice Note Parsed:
-                            "${transcript}"</i>`,
-                            "bot"
-                        );
-
-
-                        // Put transcript in input
-                        inputField.value =
-                            transcript;
-
-
-                        // ----------------------------------------
-                        // Send transcript into existing
-                        // PatchaMarket pipeline
-                        // ----------------------------------------
-
-                        await handleSend();
-
                     }
-                    catch (error) {
-
-                        console.error(
-                            "Voice processing error:",
-                            error
-                        );
-
-                        printMessage(
-                            `❌ <b>Voice Processing Failed</b><br>
-                            ${error.message}`,
-                            "bot"
-                        );
-
-                    }
-                    finally {
-
-                        micBtn.disabled = false;
-
-                        micBtn.innerText =
-                            "🎙️";
-
-                        inputField.placeholder =
-                            "Type or tap mic to talk...";
-                    }
-                };
+                }
 
 
-            // ------------------------------------------------
-            // Start recording
-            // ------------------------------------------------
-
-            mediaRecorder.start();
-
-            isRecordingAudio = true;
-
-            micBtn.classList.add(
-                "recording"
-            );
-
-            micBtn.innerText =
-                "🛑";
-
-            inputField.placeholder =
-                "Recording live voice note... Tap red button to stop.";
+                isRecordingAudio =
+                    false;
 
 
-        }
-        catch (error) {
+                micBtn.classList.remove(
+                    "recording"
+                );
 
-            console.error(
-                "Microphone error:",
-                error
-            );
 
-            printMessage(
-                `❌ <b>Microphone Permission Error</b><br>
-                ${error.message}`,
-                "bot"
-            );
+                setStatus(
+                    "Finalizing recording..."
+                );
+            }
         }
 
-    }
 
-    // ========================================================
-    // STOP RECORDING
-    // ========================================================
+        // =====================================================
+        // HTML ESCAPE
+        // =====================================================
 
-    else {
+        function escapeHtml(value) {
 
-        if (
-            mediaRecorder &&
-            mediaRecorder.state !== "inactive"
-        ) {
-
-            mediaRecorder.stop();
-
-            mediaRecorder.stream
-                .getTracks()
-                .forEach(
-                    track => track.stop()
+            return String(value)
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+                .replace(
+                    /'/g,
+                    "&#039;"
                 );
         }
 
-        isRecordingAudio = false;
 
-        micBtn.classList.remove(
-            "recording"
+        // =====================================================
+        // INITIAL STATUS
+        // =====================================================
+
+        setStatus(
+            "Ready"
         );
-    }
-}
+
+    </script>
+
+</body>
+</html>
